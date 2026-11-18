@@ -294,18 +294,20 @@ end subroutine splitstring
 subroutine print_example_quantities(verbose,ncalc)
  use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,ipr,iBfirst,&
                          ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,&
-                         ideltav,ivx,headertags
+                         ideltav,ivx,headertags,itemp
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use geometry,      only:labelcoord
- use asciiutils,    only:append_number,find_repeated_tags
+ use asciiutils,    only:append_number,find_repeated_tags,match_tag
  use particle_data, only:headervals
  use filenames,     only:ifileopen
  logical :: verbose
  integer, intent(inout), optional :: ncalc
  logical :: prefill
  character(len=lenlabel) :: string,ldfracsum
- integer :: i,j,ivecstart,ierr,ilen,idustfrac1,ndusttypes,nc
+ integer :: i,j,ivecstart,ierr,ilen,idustfrac1,ndusttypes,nc,imu,itdust
  logical :: gotpmag,gotpressure
+ character(len=lenlabel) :: lmu
+ real, parameter :: mu_default = 2.381 ! default mean molecular weight (as in Phantom)
 
  gotpmag = .false.
  gotpressure = .false.
@@ -512,6 +514,31 @@ subroutine print_example_quantities(verbose,ncalc)
     write(string,"(a)",iostat=ierr) 'T_{gas} = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
                     //trim(shortlabel(label(icv),unitslabel(icv)))
     call print_or_prefill(prefill,string,nc,ulab=' [K]')
+ endif
+ !--gas temperature for an ideal gas, if the data does not already contain one
+ !  (e.g. when the file only has a dust temperature). Uses per-particle mu and
+ !  gamma columns if present, otherwise a default mu and gamma from the header.
+ !  The constant is k_B/m_H in cgs, so this requires u in physical units [erg/g]
+ if (ndim > 0 .and. iutherm > 0 .and. icv <= 0 .and. ncolumns > 0) then
+    ! match on labels without units, e.g. 'Tdust [K]' -> 'Tdust'
+    itdust = match_tag(shortlabel(label(1:ncolumns),unitslabel(1:ncolumns)),'Tdust')
+    if ((itemp <= 0 .or. itemp==itdust) .and. index(unitslabel(iutherm),'erg/g') > 0) then
+       imu = match_tag(shortlabel(label(1:ncolumns),unitslabel(1:ncolumns)),'mu')
+       if (imu > 0) then
+          lmu = shortlabel(label(imu),unitslabel(imu))
+       else
+          write(lmu,"(f5.3)") mu_default
+       endif
+       string = ' '
+       write(string,"(a)",iostat=ierr) 'T_{gas} = (gamma-1)*'//trim(lmu)//'*' &
+                       //trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/8.2544e7'
+       if (imu > 0) then
+          call print_or_prefill(prefill,string,nc,ulab=' [K]')
+       else
+          call print_or_prefill(prefill,string,nc,ulab=' [K]',&
+               comment='assuming mean molecular weight '//trim(lmu)//', edit if needed')
+       endif
+    endif
  endif
  !--radiation temperature
  if (ndim > 0 .and. irho > 0 .and. iradenergy > 0) then
