@@ -60,19 +60,21 @@ contains
 !           t : current time
 !        hpos : horizontal position as fraction of viewport
 !        vpos : vertical position in character heights from top
+!     icolour : colour index for legend text 
 !-----------------------------------------------------------------
 
-subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,usebox)
- use plotlib,    only:plot_annotate
+subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,usebox,icolour)
+ use plotlib,    only:plot_annotate,plot_qci,plot_sci
  use asciiutils, only:string_replace
  use parsetext,  only:parse_text,rn
  use params,     only:ltag
  real, intent(in) :: t,hpos,vpos,fjust
- integer, intent(in) :: nvar
+ integer, intent(in) :: nvar,icolour
  real, intent(in), dimension(nvar) :: allvars
  character(len=*), dimension(nvar), intent(in) :: tags
  character(len=*), intent(in) :: legendtext,unitslabel
  logical,          intent(in) :: usebox
+ integer :: icolourprev
  character(len=len(legendtext)+len(unitslabel)+20) :: label
  real(kind=rn),    dimension(nvar+1) :: vals
  character(len=ltag), dimension(nvar+1) :: vars
@@ -107,8 +109,11 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
     label = trim(label)//trim(unitslabel)
  endif
 
+ call plot_qci(icolourprev)
+ if (icolour >= 0) call plot_sci(icolour)
  if (usebox) call plot_box_around_text('T',trim(label),hpos,vpos,fjust)
  call plot_annotate('T',-vpos,hpos,fjust,trim(label))
+ call plot_sci(icolourprev)
 
  ! save bounding box of legend for later queries
  call save_bbox('T',trim(label),hpos,vpos,fjust,ilegend)

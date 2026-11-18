@@ -43,12 +43,13 @@ module settings_page
  character(len=lenlabel) :: labelyalt
  integer, parameter :: maxc = 16
  real    :: colourpalette(3,maxc)
+ integer :: icolour_legend
 
  namelist /pageopts/ iaxis,nacross,ndown,interactive,iadapt,iadaptcoords, &
    nstepsperpage,iColourEachStep,iChangeStyles,tile,ipapersize,papersizex,aspectratio, &
    iPlotLegend,iPlotStepLegend,hposlegend,vposlegend,iPlotTitles,hpostitle, &
    vpostitle,fjusttitle,legendtext,iPageColours,charheight,linewidth,&
-   fjustlegend,iPlotLegendOnlyOnPanel, &
+   fjustlegend,iPlotLegendOnlyOnPanel,icolour_legend, &
    iPlotScale,dxscale,scaletext,hposscale,vposscale,iscalepanel,iUseBackgroundColourForAxes, &
    usesquarexy,maxlinestyle,modlinestyle,maxcolour,modcolour,usecolumnorder,ipapersizeunits,&
    adjustlimitstodevice,alphalegend,yscalealt,labelyalt,xminoffset_track,xmaxoffset_track, &
@@ -85,6 +86,7 @@ subroutine defaults_set_page
  alphalegend = 0.5    ! transparency of overlaid annotation
  legendtext = 't='
  iPlotLegendOnlyOnPanel = 0
+ icolour_legend = -1  
 
  iPlotTitles = .false.  ! whether or not to plot titles
  hpostitle = 0.5       ! horizontal title position as fraction of viewport
@@ -542,6 +544,7 @@ subroutine submenu_legend(ichoose)
  use shapes,    only:nshapes,labelshapetype,shape,submenu_shapes
  use legends,   only:prompt_panelselect
  use labels,    only:headertags,count_non_blank
+ use plotlib,   only:plotlib_maxlinecolour
  integer, intent(in) :: ichoose
  integer             :: iaction,i,ierr,i1,i2,nhdr
  character(len=50)   :: string
@@ -578,13 +581,13 @@ subroutine submenu_legend(ichoose)
        endif
     enddo
     !--print menu
-    print 20,print_logical(iPlotLegend),hposlegend,vposlegend,fjustlegend,trim(legendtext), &
+    print 20,print_logical(iPlotLegend),hposlegend,vposlegend,fjustlegend,icolour_legend,trim(legendtext), &
              print_logical(iPlotTitles),hpostitle,vpostitle,fjusttitle, &
              print_logical(iPlotStepLegend), print_logical(iPlotScale), &
              nshapes,trim(string)
 
 20  format(' 0) exit ',/,                   &
-        ' 1) time legend settings                          (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,'"',a,'")',/, &
+        ' 1) time legend settings                          (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,i2,1x,'"',a,'")',/, &
         ' 2) title settings                                (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
         ' 3) legend for multiple steps per page on/off     (',1x,a,1x,')',/, &
         ' 4) plot scale |---| on coordinate plots          (',1x,a,1x,')',/, &
@@ -621,6 +624,8 @@ subroutine submenu_legend(ichoose)
             hposlegend,0.0,1.0)
        call prompt('Enter vertical position in character heights from top',vposlegend)
        call prompt('Enter justification factor (0.0=left 1.0=right)',fjustlegend,0.0,1.0)
+       call prompt('Enter colour index for time legend',&
+                   icolour_legend,-1,plotlib_maxlinecolour)
        call prompt_panelselect('legend',iPlotLegendOnlyOnPanel)
     endif
  case(2)

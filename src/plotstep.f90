@@ -3202,7 +3202,7 @@ subroutine legends_and_title
  use titles,        only:pagetitles,steplegend,lensteplegend
  use filenames,     only:nstepsinfile,nfiles,rootname
  use settings_page, only:iPlotLegend,iPlotStepLegend, &
-        hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel, &
+        hposlegend,vposlegend,fjustlegend,legendtext,iPlotLegendOnlyOnPanel,icolour_legend,&
         iPlotScale,iscalepanel,dxscale,hposscale,vposscale,scaletext,&
         alphalegend,iUseBackGroundColourForAxes
  use shapes,        only:nshapes,plot_shapes
@@ -3281,7 +3281,7 @@ subroutine legends_and_title
     if (istepsonpage==1) then
        nhdr = count_non_blank(headertags)
        call legend(legendtext,timei,nhdr,headervalsi,headertags,labeltimeunits,&
-                      hposlegend,vposlegend,fjustlegend,usebox)
+                      hposlegend,vposlegend,fjustlegend,usebox,icolour_legend)
     endif
  endif
 

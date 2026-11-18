@@ -431,6 +431,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        print*,' ctrl-t, ^: add text or arrow(^) annotation at current position'
        print*,' ctrl-m   : toggle Hollywood mode'
        print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
+       print*,' L        : change colour of time (L)egend'
        print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
        if (irender > 0) print*,' f/F      : f)lip to next/previous column in rendering (rendered plots only)'
        print*,' v/V/w    : decrease/increase/adapt arrow size or streamline density (Z for x10)'
@@ -1307,6 +1308,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        !
        !--general plot stuff
        !
+    case('L') ! cycle time legend colour
+       if (cycle_legend_colour(in_legend(xpt,ypt))) then
+          iadvance = 0
+          interactivereplot = .true.
+          iexit = .true.
+       endif
     case('G') ! move legend here
        call print_message(xpt,ypt,'setting legend position to current location')
        call mvlegend(xpt,ypt,xmin,xmax,ymax)
@@ -1891,6 +1898,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        print*,' g        : plot a line and find its g)radient'
        print*,' ctrl-t, ^: add text or arrow(^) at current position'
        print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
+       print*,' L        : change colour of time (L)egend'
        print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
        print*,' v/V/w    : decrease/increase/adapt arrow size or streamline density (Z for x10)'
        print*,' s        : (s)ave current settings for all steps'
@@ -2325,6 +2333,12 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        print*,'setting legend position to current location...'
        if (ipanel > 0) then
           call mvlegend(xpti,ypti,xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),xmax(iplotyarr(ipanel)),ipanel)
+          istep = istepnew
+          interactivereplot = .true.
+          iexit = .true.
+       endif
+    case('L') ! cycle time legend colour
+       if (cycle_legend_colour(in_legend(xpt,ypt))) then
           istep = istepnew
           interactivereplot = .true.
           iexit = .true.
@@ -2765,6 +2779,24 @@ logical function legend_is_plotted(id)
  end select
 
 end function legend_is_plotted
+!
+!--cycle the colour of the time legend, if the cursor is over it
+!
+logical function cycle_legend_colour(id)
+ use legends,       only:ilegend
+ use settings_page, only:icolour_legend,iPlotLegend
+ use plotlib,       only:plotlib_maxlinecolour
+ integer, intent(in) :: id
+
+ cycle_legend_colour = (id == ilegend .and. iPlotLegend)
+ if (cycle_legend_colour) then
+    icolour_legend = mod(max(icolour_legend,1),plotlib_maxlinecolour) + 1
+    print "(a,i2)",' time legend colour index = ',icolour_legend
+ else
+    print "(a)",' move cursor over the time legend to change its colour'
+ endif
+
+end function cycle_legend_colour
 !
 !--move the legend to the current position
 !
